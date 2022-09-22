@@ -62,10 +62,8 @@ namespace AddSealed
                     SyntaxFactory.Whitespace(" ")
                     );
 
-            var partialIndex = FindIndexFor(typeDeclaration.Modifiers, m => m.Kind() == SyntaxKind.PartialKeyword);
-
             TypeDeclarationSyntax toReplaceNode;
-            if (partialIndex < 0)
+            if (typeDeclaration.Modifiers.Count == 0)
             {
                 var newModifiers = typeDeclaration.Modifiers.Insert(0, sealeds);
 
@@ -78,28 +76,43 @@ namespace AddSealed
             }
             else
             {
-                sealeds = sealeds.WithLeadingTrivia(
-                    typeDeclaration.Modifiers[partialIndex].LeadingTrivia
-                    );
+                var partialIndex = FindIndexFor(typeDeclaration.Modifiers, m => m.Kind() == SyntaxKind.PartialKeyword);
 
-                var partials = typeDeclaration.Modifiers[partialIndex];
-                var partialWithoutTrivia = partials.WithLeadingTrivia();
+                if (partialIndex < 0)
+                {
+                    var newModifiers = typeDeclaration.Modifiers.Add(sealeds);
 
-                var modifiers = typeDeclaration.Modifiers.Replace(
-                    partials,
-                    partialWithoutTrivia
-                    );
+                    toReplaceNode = typeDeclaration
+                        .WithoutTrivia()
+                        .WithModifiers(newModifiers)
+                        .WithLeadingTrivia(typeDeclaration.GetLeadingTrivia())
+                        .WithTrailingTrivia(typeDeclaration.GetTrailingTrivia())
+                        ;
+                }
+                else
+                {
+                    sealeds = sealeds.WithLeadingTrivia(
+                        typeDeclaration.Modifiers[partialIndex].LeadingTrivia
+                        );
 
-                var newModifiers = modifiers.Insert(partialIndex, sealeds);
-                
-                toReplaceNode = typeDeclaration
-                    .WithoutTrivia()
-                    .WithModifiers(newModifiers)
-                    .WithLeadingTrivia(typeDeclaration.GetLeadingTrivia())
-                    .WithTrailingTrivia(typeDeclaration.GetTrailingTrivia())
-                    ;
+                    var partials = typeDeclaration.Modifiers[partialIndex];
+                    var partialWithoutTrivia = partials.WithLeadingTrivia();
+
+                    var modifiers = typeDeclaration.Modifiers.Replace(
+                        partials,
+                        partialWithoutTrivia
+                        );
+
+                    var newModifiers = modifiers.Insert(partialIndex, sealeds);
+
+                    toReplaceNode = typeDeclaration
+                        .WithoutTrivia()
+                        .WithModifiers(newModifiers)
+                        .WithLeadingTrivia(typeDeclaration.GetLeadingTrivia())
+                        .WithTrailingTrivia(typeDeclaration.GetTrailingTrivia())
+                        ;
+                }
             }
-
 
             var oldRoot = await document.GetSyntaxRootAsync(cancellationToken).ConfigureAwait(false);
 

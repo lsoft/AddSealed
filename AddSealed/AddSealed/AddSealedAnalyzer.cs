@@ -80,6 +80,22 @@ namespace AddSealed
                             {
                                 return;
                             }
+                            foreach (var member in symbol.GetMembers())
+                            {
+                                if (member.IsVirtual)
+                                {
+                                    if (symbol.IsRecord && member.IsImplicitlyDeclared)
+                                    {
+                                        //для рекордов генерируются автоматические мемберы "про запас",
+                                        //на случай наследования
+                                        //они не должны мешать нам добавлять sealed, если де-факто нету
+                                        //наследников в коде
+                                        continue;
+                                    }
+
+                                    return;
+                                }
+                            }
 
                             subjectToTestClasses.Add(symbol);
                         },
