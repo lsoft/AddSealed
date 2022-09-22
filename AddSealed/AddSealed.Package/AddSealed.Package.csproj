@@ -9,7 +9,7 @@
 
   <PropertyGroup>
     <PackageId>AddSealed</PackageId>
-    <PackageVersion>0.5</PackageVersion>
+    <PackageVersion>0.6</PackageVersion>
     <Authors>ls</Authors>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/lsoft/AddSealed</PackageProjectUrl>

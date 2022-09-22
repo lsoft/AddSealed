@@ -65,23 +65,17 @@ namespace AddSealed
                                 excludedClasses.Add(symbol.BaseType);
                             }
 
-                            //параметр дженерика тоже запрещает классу быть sealed
+                            //параметр дженерика для класса тоже запрещает классу быть sealed
+                            ProcessTypeParameters(excludedClasses, symbol.TypeParameters);
+
+                            //параметр дженерика для методов тоже запрещает классу быть sealed
                             foreach (var member in symbol.GetMembers())
                             {
                                 if (member is IMethodSymbol method)
                                 {
                                     if (method.IsGenericMethod)
                                     {
-                                        foreach (var typeParameter in method.TypeParameters)
-                                        {
-                                            foreach (var constraintType in typeParameter.ConstraintTypes)
-                                            {
-                                                if (constraintType is INamedTypeSymbol namedConstraintType)
-                                                {
-                                                    excludedClasses.Add(namedConstraintType);
-                                                }
-                                            }
-                                        }
+                                        ProcessTypeParameters(excludedClasses, method.TypeParameters);
                                     }
                                 }
                             }
@@ -145,6 +139,23 @@ namespace AddSealed
                             }
                         });
                 });
+        }
+
+        private static void ProcessTypeParameters(
+            TypeContainer container,
+            ImmutableArray<ITypeParameterSymbol> typeParameters
+            )
+        {
+            foreach (var typeParameter in typeParameters)
+            {
+                foreach (var constraintType in typeParameter.ConstraintTypes)
+                {
+                    if (constraintType is INamedTypeSymbol namedConstraintType)
+                    {
+                        container.Add(namedConstraintType);
+                    }
+                }
+            }
         }
     }
 }
