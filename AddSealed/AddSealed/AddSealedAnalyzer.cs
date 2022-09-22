@@ -40,8 +40,8 @@ namespace AddSealed
             context.RegisterCompilationStartAction(
                 cs =>
                 {
-                    var pretendentClasses = new HashSet<INamedTypeSymbol>(SymbolEqualityComparer.Default);
-                    var excludedClasses = new HashSet<INamedTypeSymbol>(SymbolEqualityComparer.Default);
+                    var pretendentClasses = new TypeContainer();
+                    var excludedClasses = new TypeContainer();
 
                     cs.RegisterSymbolAction(
                         sac =>
@@ -62,14 +62,7 @@ namespace AddSealed
 
                             if (symbol.BaseType != null)
                             {
-                                if (symbol.BaseType.IsGenericType)
-                                {
-                                    excludedClasses.Add(symbol.BaseType.ConstructUnboundGenericType());
-                                }
-                                else
-                                {
-                                    excludedClasses.Add(symbol.BaseType);
-                                }
+                                excludedClasses.Add(symbol.BaseType);
                             }
 
                             //параметр дженерика тоже запрещает классу быть sealed
@@ -85,14 +78,7 @@ namespace AddSealed
                                             {
                                                 if (constraintType is INamedTypeSymbol namedConstraintType)
                                                 {
-                                                    if (namedConstraintType.IsGenericType)
-                                                    {
-                                                        excludedClasses.Add(namedConstraintType.ConstructUnboundGenericType());
-                                                    }
-                                                    else
-                                                    {
-                                                        excludedClasses.Add(namedConstraintType);
-                                                    }
+                                                    excludedClasses.Add(namedConstraintType);
                                                 }
                                             }
                                         }
@@ -149,17 +135,7 @@ namespace AddSealed
                         {
                             foreach (var pretendent in pretendentClasses)
                             {
-                                var produceDiagnostic = false;
-                                if (pretendent.IsGenericType)
-                                {
-                                    produceDiagnostic = !excludedClasses.Contains(
-                                        pretendent.ConstructUnboundGenericType()
-                                        );
-                                }
-                                else
-                                {
-                                    produceDiagnostic = !excludedClasses.Contains(pretendent);
-                                }
+                                var produceDiagnostic = !excludedClasses.Contains(pretendent);
 
                                 if (produceDiagnostic)
                                 {
