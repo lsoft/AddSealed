@@ -50,11 +50,8 @@ namespace AddSealed
                             {
                                 return;
                             }
+
                             if (symbol.TypeKind != TypeKind.Class)
-                            {
-                                return;
-                            }
-                            if (symbol.IsStatic)
                             {
                                 return;
                             }
@@ -65,7 +62,14 @@ namespace AddSealed
 
                             if (symbol.BaseType != null)
                             {
-                                excludedClasses.Add(symbol.BaseType);
+                                if (symbol.BaseType.IsGenericType)
+                                {
+                                    excludedClasses.Add(symbol.BaseType.ConstructUnboundGenericType());
+                                }
+                                else
+                                {
+                                    excludedClasses.Add(symbol.BaseType);
+                                }
                             }
 
                             //параметр дженерика тоже запрещает классу быть sealed
@@ -81,12 +85,24 @@ namespace AddSealed
                                             {
                                                 if (constraintType is INamedTypeSymbol namedConstraintType)
                                                 {
-                                                    excludedClasses.Add(namedConstraintType);
+                                                    if (namedConstraintType.IsGenericType)
+                                                    {
+                                                        excludedClasses.Add(namedConstraintType.ConstructUnboundGenericType());
+                                                    }
+                                                    else
+                                                    {
+                                                        excludedClasses.Add(namedConstraintType);
+                                                    }
                                                 }
                                             }
                                         }
                                     }
                                 }
+                            }
+
+                            if (symbol.IsStatic)
+                            {
+                                return;
                             }
 
                             if (excludedClasses.Contains(symbol))
@@ -133,7 +149,19 @@ namespace AddSealed
                         {
                             foreach (var pretendent in pretendentClasses)
                             {
-                                if (!excludedClasses.Contains(pretendent))
+                                var produceDiagnostic = false;
+                                if (pretendent.IsGenericType)
+                                {
+                                    produceDiagnostic = !excludedClasses.Contains(
+                                        pretendent.ConstructUnboundGenericType()
+                                        );
+                                }
+                                else
+                                {
+                                    produceDiagnostic = !excludedClasses.Contains(pretendent);
+                                }
+
+                                if (produceDiagnostic)
                                 {
                                     var diagnostic = Diagnostic.Create(Rule, pretendent.Locations[0], pretendent.Name);
                                     ce.ReportDiagnostic(diagnostic);

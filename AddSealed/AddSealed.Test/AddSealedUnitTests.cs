@@ -384,7 +384,7 @@ namespace AddSealed.Test
         }
 
         [TestMethod]
-        public async Task GenericConstraint_2Classes()
+        public async Task GenericConstraint1_2Classes()
         {
             var test = @"
     using System;
@@ -400,10 +400,64 @@ namespace AddSealed.Test
         {
         }
 
-        sealed class StaticClass
+        sealed class OtherClass
         {
             public static void Do<T>()
                 where T : MyClass
+            {
+            }
+        }
+    }";
+
+            await VerifyCS.VerifyAnalyzerAsync(test);
+        }
+
+        [TestMethod]
+        public async Task GenericConstraint2_2Classes()
+        {
+            var test = @"
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Text;
+    using System.Threading.Tasks;
+    using System.Diagnostics;
+
+    namespace ConsoleApplication1
+    {
+        class {|#0:MyClass<T>|}
+        {
+        }
+
+        sealed class OtherClass : MyClass<int>
+        {
+        }
+    }";
+
+            await VerifyCS.VerifyAnalyzerAsync(test);
+        }
+
+        [TestMethod]
+        public async Task GenericConstraint3_2Classes()
+        {
+            var test = @"
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Text;
+    using System.Threading.Tasks;
+    using System.Diagnostics;
+
+    namespace ConsoleApplication1
+    {
+        class {|#0:MyClass<T>|}
+        {
+        }
+
+        sealed class OtherClass
+        {
+            public static void Do<T>()
+                where T : MyClass<int>
             {
             }
         }
