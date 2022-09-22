@@ -358,6 +358,59 @@ namespace AddSealed.Test
             await VerifyCS.VerifyCodeFixAsync(test, expected, fixtest);
         }
 
+        [TestMethod]
+        public async Task GenericConstraint_Class()
+        {
+            var test = @"
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Text;
+    using System.Threading.Tasks;
+    using System.Diagnostics;
+
+    namespace ConsoleApplication1
+    {
+        class {|#0:MyClass|}
+        {
+            public static void Do<T>()
+                where T : MyClass
+            {
+            }
+        }
+    }";
+
+            await VerifyCS.VerifyAnalyzerAsync(test);
+        }
+
+        [TestMethod]
+        public async Task GenericConstraint_2Classes()
+        {
+            var test = @"
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Text;
+    using System.Threading.Tasks;
+    using System.Diagnostics;
+
+    namespace ConsoleApplication1
+    {
+        class {|#0:MyClass|}
+        {
+        }
+
+        sealed class StaticClass
+        {
+            public static void Do<T>()
+                where T : MyClass
+            {
+            }
+        }
+    }";
+
+            await VerifyCS.VerifyAnalyzerAsync(test);
+        }
 
     }
 }

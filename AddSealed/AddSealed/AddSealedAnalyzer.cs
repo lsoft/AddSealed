@@ -40,8 +40,8 @@ namespace AddSealed
             context.RegisterCompilationStartAction(
                 cs =>
                 {
-                    var subjectToTestClasses = new HashSet<INamedTypeSymbol>(SymbolEqualityComparer.Default);
-                    var baseClasses = new HashSet<INamedTypeSymbol>(SymbolEqualityComparer.Default);
+                    var pretendentClasses = new HashSet<INamedTypeSymbol>(SymbolEqualityComparer.Default);
+                    var excludedClasses = new HashSet<INamedTypeSymbol>(SymbolEqualityComparer.Default);
 
                     cs.RegisterSymbolAction(
                         sac =>
@@ -65,7 +65,33 @@ namespace AddSealed
 
                             if (symbol.BaseType != null)
                             {
-                                baseClasses.Add(symbol.BaseType);
+                                excludedClasses.Add(symbol.BaseType);
+                            }
+
+                            //параметр дженерика тоже запрещает классу быть sealed
+                            foreach (var member in symbol.GetMembers())
+                            {
+                                if (member is IMethodSymbol method)
+                                {
+                                    if (method.IsGenericMethod)
+                                    {
+                                        foreach (var typeParameter in method.TypeParameters)
+                                        {
+                                            foreach (var constraintType in typeParameter.ConstraintTypes)
+                                            {
+                                                if (constraintType is INamedTypeSymbol namedConstraintType)
+                                                {
+                                                    excludedClasses.Add(namedConstraintType);
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            if (excludedClasses.Contains(symbol))
+                            {
+                                return;
                             }
 
                             if (symbol.IsSealed)
@@ -97,7 +123,7 @@ namespace AddSealed
                                 }
                             }
 
-                            subjectToTestClasses.Add(symbol);
+                            pretendentClasses.Add(symbol);
                         },
                         SymbolKind.NamedType
                         );
@@ -105,11 +131,11 @@ namespace AddSealed
                     cs.RegisterCompilationEndAction(
                         ce =>
                         {
-                            foreach (var subject in subjectToTestClasses)
+                            foreach (var pretendent in pretendentClasses)
                             {
-                                if (!baseClasses.Contains(subject))
+                                if (!excludedClasses.Contains(pretendent))
                                 {
-                                    var diagnostic = Diagnostic.Create(Rule, subject.Locations[0], subject.Name);
+                                    var diagnostic = Diagnostic.Create(Rule, pretendent.Locations[0], pretendent.Name);
                                     ce.ReportDiagnostic(diagnostic);
                                 }
                             }
