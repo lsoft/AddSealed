@@ -55,6 +55,80 @@ namespace AddSealed.Test
         }
 
         [TestMethod]
+        public async Task Partial_Class()
+        {
+            var test = @"
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Text;
+    using System.Threading.Tasks;
+    using System.Diagnostics;
+
+    namespace ConsoleApplication1
+    {
+        partial class {|#0:MyClass|}
+        {
+        }
+    }";
+
+            var fixtest = @"
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Text;
+    using System.Threading.Tasks;
+    using System.Diagnostics;
+
+    namespace ConsoleApplication1
+    {
+        sealed partial class MyClass
+        {
+        }
+    }";
+
+            var expected = VerifyCS.Diagnostic("AddSealed").WithLocation(0).WithArguments("MyClass");
+            await VerifyCS.VerifyCodeFixAsync(test, expected, fixtest);
+        }
+
+        [TestMethod]
+        public async Task PublicPartial_Class()
+        {
+            var test = @"
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Text;
+    using System.Threading.Tasks;
+    using System.Diagnostics;
+
+    namespace ConsoleApplication1
+    {
+        public partial class {|#0:MyClass|}
+        {
+        }
+    }";
+
+            var fixtest = @"
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Text;
+    using System.Threading.Tasks;
+    using System.Diagnostics;
+
+    namespace ConsoleApplication1
+    {
+        public sealed partial class MyClass
+        {
+        }
+    }";
+
+            var expected = VerifyCS.Diagnostic("AddSealed").WithLocation(0).WithArguments("MyClass");
+            await VerifyCS.VerifyCodeFixAsync(test, expected, fixtest);
+        }
+
+        [TestMethod]
         public async Task Static_Class()
         {
             var test = @"
